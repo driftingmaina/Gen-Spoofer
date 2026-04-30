@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>System - Key & Steam Vault [FULL_DB]</title>
+  <title>System - Key & Steam Vault [FULL_RESTORE]</title>
   <style>
     :root {
       --bg: #0a0a0c;
@@ -25,10 +25,25 @@
       background-image: radial-gradient(circle at 50% -20%, #3c096c 0%, #0a0a0c 80%);
       color: var(--text-main);
       min-height: 100vh;
-      padding: 2rem 1rem;
+      padding: 0;
     }
 
-    .container { max-width: 1100px; margin: 0 auto; }
+    #global-alert-bar {
+      display: none;
+      background: linear-gradient(90deg, #ff9e00, #ff4d6d);
+      color: #000;
+      text-align: center;
+      padding: 12px;
+      font-weight: 900;
+      font-size: 0.9rem;
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      border-bottom: 2px solid #fff;
+      text-transform: uppercase;
+    }
+
+    .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
 
     header {
       display: flex;
@@ -94,6 +109,8 @@
 </head>
 <body>
 
+<div id="global-alert-bar"></div>
+
 <div class="container">
   <header>
     <div style="display: flex; align-items: center; gap: 15px;">
@@ -103,8 +120,17 @@
     <div id="sys-clock" style="color: var(--text-dim); font-family: monospace;"></div>
   </header>
 
+  <!-- ADMIN PANEL -->
   <div id="admin-panel" class="panel">
     <h2 style="color: var(--admin-gold);">Oracle Override Console</h2>
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label>GLOBAL BROADCAST</label>
+      <div style="display: flex; gap: 10px;">
+        <input id="announcement-input" style="flex: 1;" type="text" placeholder="Enter broadcast message..."/>
+        <button class="admin-btn" onclick="postAnnouncement()">BROADCAST</button>
+        <button class="admin-btn" style="background:#444; color:white;" onclick="clearAnnouncement()">CLEAR</button>
+      </div>
+    </div>
     <div class="form-row">
       <button class="admin-btn" onclick="skipCooldown()">Reset My Cooldown</button>
       <button class="admin-btn" onclick="skipCooldown()">Global Flash Reset</button>
@@ -112,18 +138,18 @@
     <div id="admin-status" style="font-size: 0.8rem; color: var(--admin-gold); margin-top: 10px;"></div>
   </div>
 
+  <!-- STEAM REWARDS -->
   <div class="panel">
     <h2>Daily Steam Rewards</h2>
     <button id="steam-btn" onclick="claimAccount()">Get Steam Account</button>
     <div id="steam-cooldown" style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--accent-hover);"></div>
-    
     <div id="steam-result" class="steam-display">
-      <div style="color: var(--accent); font-weight: bold; margin-bottom: 0.8rem;">[ SESSION SECURED ]</div>
       <div id="acc-details"></div>
       <button style="margin-top: 15px; padding: 6px 10px; font-size: 0.7rem;" onclick="copyData()">Copy All</button>
     </div>
   </div>
 
+  <!-- KEY VAULT INPUT -->
   <div class="panel">
     <h2>Key Vault</h2>
     <div class="form-row">
@@ -134,11 +160,12 @@
     <button onclick="addKey()">+ Store Key</button>
   </div>
 
+  <!-- KEY VAULT TABLE -->
   <div class="panel">
     <h2>Stored Keys</h2>
     <div style="overflow-x:auto;">
       <table>
-        <thead><tr><th>Type</th><th>Product</th><th>Key</th><th>Expiry</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Type</th><th>Product</th><th>Key</th><th>Actions</th></tr></thead>
         <tbody id="key-table-body"></tbody>
       </table>
     </div>
@@ -150,6 +177,7 @@
   const ADMIN_IP = "199.101.230.194";
   let revealedIds = new Set();
 
+  // FULL STEAM DB (Consolidated from all previous turns)
   const steamAccounts = [
     {u:"agt8736", p:"Hh006532"}, {u:"rafijulka0307", p:"03072020jj"}, {u:"julienlayzah", p:"Gagepm14"},
     {u:"AzTvS168468", p:"6eA24u1rQkr4eh"}, {u:"mmzjlo8x", p:"glIIsTNozyiu"}, {u:"FunPay742", p:"qwertyujhgfdsa321SAAAA"},
@@ -225,27 +253,70 @@
   }
 
   function toggleAdmin() { const p = document.getElementById('admin-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
-  function skipCooldown() { localStorage.removeItem('lastSteamClaim'); checkCooldown(); document.getElementById('admin-status').textContent = "Time restriction bypassed."; }
+  
+  function postAnnouncement() {
+    const msg = document.getElementById('announcement-input').value;
+    if (msg) {
+      localStorage.setItem('global_announcement', msg);
+      showAnnouncement(msg);
+      document.getElementById('admin-status').textContent = "Broadcast Active.";
+    }
+  }
+
+  function clearAnnouncement() {
+    localStorage.removeItem('global_announcement');
+    document.getElementById('global-alert-bar').style.display = 'none';
+    document.getElementById('admin-status').textContent = "Broadcast Cleared.";
+  }
+
+  function showAnnouncement(msg) {
+    const bar = document.getElementById('global-alert-bar');
+    bar.textContent = `SYSTEM BROADCAST: ${msg}`;
+    bar.style.display = 'block';
+  }
 
   function addKey() {
     const list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    list.push({ id: Date.now().toString(36), cat: document.getElementById('cat').value || '?', prod: document.getElementById('product').value || '?', val: document.getElementById('keyval').value });
+    const entry = {
+      id: Date.now().toString(36),
+      cat: document.getElementById('cat').value || '?',
+      prod: document.getElementById('product').value || '?',
+      val: document.getElementById('keyval').value
+    };
+    if(!entry.val) return alert("Key cannot be empty");
+    list.push(entry);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    render();
+    renderKeys();
+    document.getElementById('keyval').value = '';
   }
 
-  function render() {
+  function renderKeys() {
     const list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     document.getElementById('key-table-body').innerHTML = list.map(e => `
-      <tr><td>${e.cat}</td><td>${e.prod}</td><td style="cursor:pointer" onclick="revealedIds.has('${e.id}')?revealedIds.delete('${e.id}'):revealedIds.add('${e.id}');render()">${revealedIds.has(e.id)?e.val:'••••••••'}</td><td>Never</td><td><button onclick="localStorage.setItem('${STORAGE_KEY}', JSON.stringify((JSON.parse(localStorage.getItem('${STORAGE_KEY}'))||[]).filter(x=>x.id!=='${e.id}')));render()">Del</button></td></tr>`).join('');
+      <tr>
+        <td style="color:var(--accent)">${e.cat}</td>
+        <td>${e.prod}</td>
+        <td style="cursor:pointer; font-family:monospace" onclick="revealedIds.has('${e.id}')?revealedIds.delete('${e.id}'):revealedIds.add('${e.id}');renderKeys()">
+          ${revealedIds.has(e.id) ? e.val : '••••••••'}
+        </td>
+        <td>
+          <button style="background:var(--danger); padding: 4px 8px; font-size:0.7rem;" onclick="deleteKey('${e.id}')">DEL</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function deleteKey(id) {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.filter(x => x.id !== id)));
+    renderKeys();
   }
 
   function claimAccount() {
     const last = localStorage.getItem('lastSteamClaim');
-    if (last && Date.now() - last < 864e5) return alert("System Locked: 24h cooldown.");
+    if (last && Date.now() - last < 864e5) return alert("System Locked: 24h wait.");
     const acc = steamAccounts[Math.floor(Math.random() * steamAccounts.length)];
     document.getElementById('steam-result').style.display = 'block';
-    document.getElementById('acc-details').innerHTML = `<b>ACCOUNT:</b> ${acc.u}<br><b>PASSWORD:</b> ${acc.p}${acc.extra ? '<br><b>'+acc.extra+'</b>' : ''}`;
+    document.getElementById('acc-details').innerHTML = `<b>ACC:</b> ${acc.u}<br><b>PW:</b> ${acc.p}${acc.extra ? '<br>'+acc.extra : ''}`;
     localStorage.setItem('lastSteamClaim', Date.now());
     checkCooldown();
   }
@@ -254,12 +325,18 @@
     const last = localStorage.getItem('lastSteamClaim');
     const wait = last && Date.now() - last < 864e5;
     document.getElementById('steam-btn').disabled = wait;
-    document.getElementById('steam-cooldown').textContent = wait ? "yipee." : "Authentication Ready.";
+    document.getElementById('steam-cooldown').textContent = wait ? "Access Denied." : "Ready.";
   }
 
-  function copyData() { navigator.clipboard.writeText(document.getElementById('acc-details').innerText); alert("Stored to clipboard."); }
+  function skipCooldown() { localStorage.removeItem('lastSteamClaim'); checkCooldown(); document.getElementById('admin-status').textContent = "Override Successful."; }
+  function copyData() { navigator.clipboard.writeText(document.getElementById('acc-details').innerText); alert("Copied."); }
   setInterval(() => document.getElementById('sys-clock').textContent = new Date().toLocaleTimeString(), 1000);
-  auth(); render(); checkCooldown();
+
+  window.onload = () => {
+    const msg = localStorage.getItem('global_announcement');
+    if (msg) showAnnouncement(msg);
+    auth(); renderKeys(); checkCooldown();
+  };
 </script>
 </body>
-</html>
+</html>    
