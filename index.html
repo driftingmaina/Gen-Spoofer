@@ -174,7 +174,7 @@
 
 <script>
   const STORAGE_KEY = 'key_bin_entries';
-  const ADMIN_IP = "199.101.230.194";
+  const AUTH_HASH = "8277df60635e985b96791e8736f1c4295f190696f8c7b508f7128532f6b8b543";
   let revealedIds = new Set();
 
   // FULL STEAM DB (Consolidated from all previous turns)
@@ -243,13 +243,26 @@
     {u:"Sonjuesinca459", p:"BetaGameseasportsfc248901819/"}, {u:"Xh2Su2Hc2Db1", p:"BulbulofficialFunPay1"},
     {u:"cosman19001", p:"Sd-190001"}, {u:"mbig4912", p:"Eb2PLbZ3"}, {u:"Fernandinho_lopes", p:"lopesfar"}
   ];
+async function hashIP(ip) {
+    const msgBuffer = new TextEncoder().encode(ip);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
 
   async function auth() {
     try {
       const res = await fetch('https://api.ipify.org?format=json');
       const data = await res.json();
-      if (data.ip === ADMIN_IP) document.getElementById('admin-trigger-btn').style.display = 'block';
-    } catch(e) {}
+      const visitorHash = await hashIP(data.ip); 
+      
+      // Verification check
+      if (visitorHash === AUTH_HASH) {
+        document.getElementById('admin-trigger-btn').style.display = 'block';
+      }
+    } catch(e) {
+      console.log("Auth connection failed.");
+    }
   }
 
   function toggleAdmin() { const p = document.getElementById('admin-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
