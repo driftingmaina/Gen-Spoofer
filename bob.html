@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>System - Key & Steam Vault [FULL_DB]</title>
+  <style>
+    :root {
+      --bg: #0a0a0c;
+      --panel-bg: #121217;
+      --accent: #9d4edd;
+      --accent-hover: #c77dff;
+      --text-main: #e0e0e0;
+      --text-dim: #888;
+      --border: #2d2d3a;
+      --danger: #ff4d6d;
+      --admin-gold: #ff9e00;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(circle at 50% -20%, #3c096c 0%, #0a0a0c 80%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    h1 { color: var(--accent); font-size: 1.5rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 800; }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    #admin-trigger-btn {
+      display: none;
+      background: var(--admin-gold);
+      color: #000;
+      font-size: 0.7rem;
+      padding: 5px 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+
+    #admin-panel { display: none; border: 1px solid var(--admin-gold); background: rgba(255, 158, 0, 0.03); }
+
+    h2 { color: var(--text-main); font-size: 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; }
+    h2::before { content: ''; width: 4px; height: 18px; background: var(--accent); border-radius: 2px; }
+
+    .form-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; min-width: 180px; }
+    label { font-size: 0.75rem; color: var(--accent); font-weight: bold; }
+
+    input { background: #1a1a22; border: 1px solid var(--border); border-radius: 6px; color: var(--text-main); padding: 0.7rem; outline: none; }
+
+    button {
+      background: var(--accent); border: none; border-radius: 6px; color: white;
+      cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 0.7rem 1.2rem;
+    }
+
+    button:hover { background: var(--accent-hover); }
+    button.admin-btn { background: var(--admin-gold); color: black; margin-right: 10px; }
+
+    .steam-display {
+      margin-top: 1rem; padding: 1.2rem; background: #000;
+      border: 1px dashed var(--accent); border-radius: 8px;
+      display: none; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    thead th { background: #1a1a22; color: var(--accent); text-align: left; padding: 1rem; font-size: 0.75rem; }
+    td { padding: 1rem; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <h1>System</h1>
+      <button id="admin-trigger-btn" onclick="toggleAdmin()">ORACLE CONSOLE</button>
+    </div>
+    <div id="sys-clock" style="color: var(--text-dim); font-family: monospace;"></div>
+  </header>
+
+  <div id="admin-panel" class="panel">
+    <h2 style="color: var(--admin-gold);">Oracle Override Console</h2>
+    <div class="form-row">
+      <button class="admin-btn" onclick="skipCooldown()">Reset My Cooldown</button>
+      <button class="admin-btn" onclick="skipCooldown()">Global Flash Reset</button>
+    </div>
+    <div id="admin-status" style="font-size: 0.8rem; color: var(--admin-gold); margin-top: 10px;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Daily Steam Rewards</h2>
+    <button id="steam-btn" onclick="claimAccount()">Get Steam Account</button>
+    <div id="steam-cooldown" style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--accent-hover);"></div>
+    
+    <div id="steam-result" class="steam-display">
+      <div style="color: var(--accent); font-weight: bold; margin-bottom: 0.8rem;">[ SESSION SECURED ]</div>
+      <div id="acc-details"></div>
+      <button style="margin-top: 15px; padding: 6px 10px; font-size: 0.7rem;" onclick="copyData()">Copy All</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Key Vault</h2>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label><input id="cat" type="text" placeholder="Cheat/Spoofer"/></div>
+      <div class="form-group"><label>Product</label><input id="product" type="text" placeholder="Product Name"/></div>
+      <div class="form-group"><label>Key</label><input id="keyval" type="password" placeholder="••••••••"/></div>
+    </div>
+    <button onclick="addKey()">+ Store Key</button>
+  </div>
+
+  <div class="panel">
+    <h2>Stored Keys</h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Type</th><th>Product</th><th>Key</th><th>Expiry</th><th>Actions</th></tr></thead>
+        <tbody id="key-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'key_bin_entries';
+  const ADMIN_IP = "199.101.230.194";
+  let revealedIds = new Set();
+
+  const steamAccounts = [
+    {u:"agt8736", p:"Hh006532"}, {u:"rafijulka0307", p:"03072020jj"}, {u:"julienlayzah", p:"Gagepm14"},
+    {u:"AzTvS168468", p:"6eA24u1rQkr4eh"}, {u:"mmzjlo8x", p:"glIIsTNozyiu"}, {u:"FunPay742", p:"qwertyujhgfdsa321SAAAA"},
+    {u:"vcfiz78715", p:"dqxwf4610"}, {u:"analuciaga26", p:"eytzljbdS819"}, {u:"xflock3x", p:"Muhmuh66"},
+    {u:"ridika61", p:"v2ax3od97"}, {u:"bejdw16664", p:"Bejdw14666"}, {u:"eqjsv37403", p:"pjfa61743K"},
+    {u:"daduoshuch19", p:"hfgh5454"}, {u:"fmih9tqp", p:"BulbulofficialFunPay"}, {u:"class7r", p:"classas0004"},
+    {u:"usuvfq8222", p:"OMcsciy00S"}, {u:"MountBlladeII", p:"MountBll27$6%"}, {u:"8s2decu2mh5fnc6y0pj", p:"HU7IOU0UBV0K226"},
+    {u:"solve996", p:".A~cYk-)n\\KV\"99"}, {u:"slintosek", p:"Mrhadi98.."}, {u:"njta59762", p:"Maya0123@"},
+    {u:"brbba12969", p:"wsxqaz526224"}, {u:"skirmakovdmitrii1984", p:"CB1R9yHQyCuYu"}, {u:"mamale7766", p:"m.9944365634"},
+    {u:"xjdjg", p:"H2084g99A88"}, {u:"kk80401", p:"kk223344kkwdw"}, {u:"Md2Zd0St5Ye6", p:"Qd9Kd6Oa7Zm7"},
+    {u:"ygsofcjchouh", p:"fQW9N5zbt2"}, {u:"vszh56512", p:"Ek6Ml7Yh9Mw26t"}, {u:"gbnchimw485zhtw2w8phx79", p:"HEO1709FU85X208"},
+    {u:"wbtq1088851", p:"steamok333"}, {u:"a571157344", p:"1dhfh34ehd53"}, {u:"alex181096", p:"181096"},
+    {u:"166528950", p:"Hx5576954"}, {u:"gaonengDW77703", p:"05698748"}, {u:"JKDI27876", p:"Kc6Zy1Bu0Dp6"},
+    {u:"gaobranco", p:"10230400aaa"}, {u:"_saudideck14", p:"SAdkJK0@"}, {u:"apajf77972", p:"pcXhF306p9"},
+    {u:"fpfuryfamily", p:"thxfp362"}, {u:"maciej20157", p:"MyFunPayAresStore5512"}, {u:"zhengqiang321", p:"IGiqeNhmHt"},
+    {u:"little_jg", p:"Gargaloola14@"}, {u:"jtofh67751", p:"bondzoli1"}, {u:"090xxywbl", p:"O5xPOkfmrV66"},
+    {u:"huso3551", p:"gspjqcrdrv35"}, {u:"UaOOkRzWa2Xj@maiorfornecedor.com", p:"Wdtj3pdZBqI7mTbJV3HOc.4", extra:"2FA: 26MYZFEUTBPD2XFDGJQC6RTRZY"},
+    {u:"WcxHNGSBiSwm@maiorfornecedor.com", p:"ZpFJPwgX7r6ZGfu0Q6j72.7", extra:"2FA: RNZ24ULY7OWUABW3TIW7CV2CGA"},
+    {u:"vIiNITwq6kit@maiorfornecedor.com", p:"ByETvlYxvwUU6WszIpCvW.5", extra:"2FA: NLKBLOOBDLHA4IDJITNEKVARJI"},
+    {u:"A70Cwv5ztG72@maiorfornecedor.com", p:"TvMZnvAUAAQtk7y0FGjWb.8", extra:"2FA: PSCN75UFQGFRKSY42EJTAY3LBA"},
+    {u:"FQH7hW48LuBg@maiorfornecedor.com", p:"ZixC2tooUzdx72JfchYR9.0", extra:"2FA: Q3SZSET4JMALGXZLLVJKWFQI4Y"},
+    {u:"nYAYho4wXTKO@maiorfornecedor.com", p:"VqWiOzj6kyig2cmXB9JWO.5", extra:"2FA: ZTTUDX3UD6PYE574DY5VGDAKFA"},
+    {u:"cadusting", p:"Calixto21"}, {u:"lpuqn62765", p:"xmwcf60107"}, {u:"md94483", p:"md049523"},
+    {u:"dr4xon22", p:"ZIa_B--Z"}, {u:"wbtq1088781", p:"steamok333"}, {u:"nbwdu90105", p:"7Vfnbkmlf13"},
+    {u:"yuffi0402", p:"playerokTovarStoreRe"}, {u:"ihhza24z", p:"4ytb9naa"}, {u:"leo3d3", p:"tricolor231002"},
+    {u:"thanhnhan0401", p:"Mh20022001"}, {u:"oi0yi5ol9cw6", p:"DIDI1933321818"}, {u:"xxyenlover", p:"34cv56BN"},
+    {u:"matheus291207", p:"johomala4"}, {u:"gm462580", p:"Bejdw22580"}, {u:"juscelinolira", p:"CDTBTD66XEX6"},
+    {u:"littleiq_the_dog", p:"eigq2601"}, {u:"naheloka1", p:"funpayezskydream"}, {u:"steamgamingstorez4", p:"Katrine1335"},
+    {u:"nutty5557", p:"mynameisnut123"}, {u:"IbrahimSG", p:"Silvestrina31"}, {u:"burningempirici", p:"d0124298d2b6881426fb0e6e00b6f820"},
+    {u:"nikhilrathore5", p:"Nikhil@#434367"}, {u:"Hamedgamesfa", p:"Hamed@123"}, {u:"k8ef0k53f", p:"RaysShopAkk!2"},
+    {u:"Nichcl16", p:"matkhau16"}, {u:"sobhanbaloch", p:"dell4307"}, {u:"taadis21", p:"Majednus69"},
+    {u:"riloberge1981@gmail.com", p:"TQ1aB1LrfJ2h11"}, {u:"HA1CZB110", p:"JAMESDW11099"}, {u:"qq345330756", p:"TQyMfZZyWc"},
+    {u:"aj_joshi", p:"anonjoshimustfly"}, {u:"ffccvv8641", p:"3eK4wjsplay"}, {u:"philologus3", p:"IronPavliss1597*"},
+    {u:"SonicManiaPlus32Bits", p:"desconectatuinternetaliniciarlamania"}, {u:"arenda352", p:"Ytrnj162"},
+    {u:"Stteam771029", p:"Stteam77G123"}, {u:"xpjsx69653", p:"kd86f7y3"}, {u:"4ejgr4iy", p:"3tDlp5nDtn"},
+    {u:"fycucotaw", p:"siski337843556nchDDIock645b087"}, {u:"HbJfX569837", p:"AhIzX576675"},
+    {u:"montykoracyberpunk", p:"Montykora_FunPay-8B2in"}, {u:"newborniodide62", p:"SLD988FunPay"},
+    {u:"mreuj11865", p:"griw19294L"}, {u:"taehakang", p:"manis!45360857"}, {u:"hydraulik46", p:"0U1Kt9blIm3nTF54VdyuFg8Tv7"},
+    {u:"bejdw24074", p:"steamkk.com"}, {u:"hiyondw161", p:"91zjdnc37"}, {u:"ybfcj65067", p:"zjrk07621C"},
+    {u:"steamok1090214", p:"steamok999888"}, {u:"forzz45", p:"playerok.com/profile/QAVIX"}, {u:"vqp44022", p:"quc47770"},
+    {u:"bq6za2eo5Wn5", p:"ArwaSaad@69"}, {u:"jiaoao18882820", p:"Xiaohehe56331"}, {u:"probunloti1982", p:"an41526kx"},
+    {u:"fatre123", p:"Agantor41581vladuser"}, {u:"tytkappa", p:"ayesha322"}, {u:"wbtq1084058", p:"steamok456654"},
+    {u:"DecorousThoughtlessWhale", p:"Weirdmice91"}, {u:"steamok1089791", p:"steamok234432"}, {u:"sstwy39763", p:"ippp90692Z"},
+    {u:"ommna15005", p:"abel47528U"}, {u:"HSEI20260", p:"Vp5Io1Ts9Yg16t"}, {u:"x_steve_x5", p:"geniy25bkYAEBALTVOUMATbXYESOS"},
+    {u:"pyvbp42561", p:"bbwhm86955"}, {u:"57302671", p:"LhjAxlLtTh"}, {u:"jadalilgarcia", p:"sk8erboi8"},
+    {u:"gamesherodetroit", p:"Detroit@#8520"}, {u:"peffu72475", p:"sxiu17426Q"}, {u:"jocuriargenrinia", p:"70Games.net92"},
+    {u:"9965417569", p:"5009406188"}, {u:"Bt5Pd3Zm9Sz4", p:"Yk2Ho8Wl5Im2"}, {u:"jenngoren6a", p:"tW3nNUTv2v1986"},
+    {u:"890061717", p:"RpUK3WrbQH"}, {u:"52zdubet", p:"ctha5XsXPR35"}, {u:"penniwerth", p:"17151019"},
+    {u:"lrtts643631", p:"dGCR2cEfN_"}, {u:"marvellousabhi", p:"MAFIA1010@"}, {u:"ramingostar", p:"waltersullivan1"},
+    {u:"rusdepj", p:"Vthbksvs"}, {u:"hzsd8411", p:"Ky3GgIxDG79n"}, {u:"malao_on_top", p:"Petolocino2009"},
+    {u:"des_nekit", p:"763887n"}, {u:"yxaew408", p:"xxdanji121"}, {u:"fushen8721", p:"Hh60395121"},
+    {u:"mrdany699", p:"ilmioPiccolo.segreto123"}, {u:"rd5977", p:"951753852.ACHU"}, {u:"j2k25w", p:"Hh4522xbp"},
+    {u:"atenocer1981", p:"xx1p3au9b"}, {u:"jiaoaohehe188851", p:"junyi328756"}, {u:"58786917", p:"25925863"},
+    {u:"ooLastofusoo", p:"LastUs%Part"}, {u:"vjtae27237", p:"tojh49172Y"}, {u:"awio52501", p:"39fg6lahAA"},
+    {u:"curioustarsier8885", p:"059944Aa!"}, {u:"gabrielandradegalvao", p:"cickva00d"}, {u:"Wifkiinson", p:"Lkasqew43"},
+    {u:"faryalgillani558", p:"Funpay112233"}, {u:"komski01", p:"omarca06"}, {u:"exneydabro1972", p:"rbh3blyt"},
+    {u:"hjygq", p:"Hjy898840"}, {u:"lucusfreedom", p:"jrmanu2560"}, {u:"LILspanky702", p:"JABshomo1942"},
+    {u:"wbtq1088322", p:"steamok4566H"}, {u:"spookydubz", p:"FunPayKolyabusiness"}, {u:"xd7e5b", p:"djCZiNsY"},
+    {u:"Zalyuner", p:"Jhvghdha4"}, {u:"4e281060", p:"Hjy124626"}, {u:"jimstovall5m", p:"LEwpbKlraS1982"},
+    {u:"castillayleon37", p:"bionic123"}, {u:"96850813", p:"Derkytt090934"}, {u:"aguamus", p:"r0Jt47aZjXdB"},
+    {u:"steamok1089773", p:"steamok987"}, {u:"utoplase", p:"Grepuzase"}, {u:"juepe30342", p:"vbsmf96468"},
+    {u:"platinummonsterbeatz2", p:"boduyashops2"}, {u:"thb111990", p:"steamok111990"},
+    {u:"Sonjuesinca459", p:"BetaGameseasportsfc248901819/"}, {u:"Xh2Su2Hc2Db1", p:"BulbulofficialFunPay1"},
+    {u:"cosman19001", p:"Sd-190001"}, {u:"mbig4912", p:"Eb2PLbZ3"}, {u:"Fernandinho_lopes", p:"lopesfar"}
+  ];
+
+  async function auth() {
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      if (data.ip === ADMIN_IP) document.getElementById('admin-trigger-btn').style.display = 'block';
+    } catch(e) {}
+  }
+
+  function toggleAdmin() { const p = document.getElementById('admin-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+  function skipCooldown() { localStorage.removeItem('lastSteamClaim'); checkCooldown(); document.getElementById('admin-status').textContent = "Time restriction bypassed."; }
+
+  function addKey() {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    list.push({ id: Date.now().toString(36), cat: document.getElementById('cat').value || '?', prod: document.getElementById('product').value || '?', val: document.getElementById('keyval').value });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    render();
+  }
+
+  function render() {
+    const list = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    document.getElementById('key-table-body').innerHTML = list.map(e => `
+      <tr><td>${e.cat}</td><td>${e.prod}</td><td style="cursor:pointer" onclick="revealedIds.has('${e.id}')?revealedIds.delete('${e.id}'):revealedIds.add('${e.id}');render()">${revealedIds.has(e.id)?e.val:'••••••••'}</td><td>Never</td><td><button onclick="localStorage.setItem('${STORAGE_KEY}', JSON.stringify((JSON.parse(localStorage.getItem('${STORAGE_KEY}'))||[]).filter(x=>x.id!=='${e.id}')));render()">Del</button></td></tr>`).join('');
+  }
+
+  function claimAccount() {
+    const last = localStorage.getItem('lastSteamClaim');
+    if (last && Date.now() - last < 864e5) return alert("System Locked: 24h cooldown.");
+    const acc = steamAccounts[Math.floor(Math.random() * steamAccounts.length)];
+    document.getElementById('steam-result').style.display = 'block';
+    document.getElementById('acc-details').innerHTML = `<b>ACCOUNT:</b> ${acc.u}<br><b>PASSWORD:</b> ${acc.p}${acc.extra ? '<br><b>'+acc.extra+'</b>' : ''}`;
+    localStorage.setItem('lastSteamClaim', Date.now());
+    checkCooldown();
+  }
+
+  function checkCooldown() {
+    const last = localStorage.getItem('lastSteamClaim');
+    const wait = last && Date.now() - last < 864e5;
+    document.getElementById('steam-btn').disabled = wait;
+    document.getElementById('steam-cooldown').textContent = wait ? "yipee." : "Authentication Ready.";
+  }
+
+  function copyData() { navigator.clipboard.writeText(document.getElementById('acc-details').innerText); alert("Stored to clipboard."); }
+  setInterval(() => document.getElementById('sys-clock').textContent = new Date().toLocaleTimeString(), 1000);
+  auth(); render(); checkCooldown();
+</script>
+</body>
+</html>
